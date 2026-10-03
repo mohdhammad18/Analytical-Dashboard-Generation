@@ -1,0 +1,5 @@
+{
+  "name": "AI Video Analytics Dashboard",
+  "description": "Analytics dashboard for long-form to short-form AI video conversion platform, featuring an AI chatbot for dynamic chart generation.",
+  "requestFramePermissions": []
+}

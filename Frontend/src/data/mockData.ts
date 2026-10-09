@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
 const Backend_URL = import.meta.env.VITE_DASHBOARD_URL || `${baseUrl.replace(/\/$/, '')}/dashboard/`;
 
 export interface DashboardData {

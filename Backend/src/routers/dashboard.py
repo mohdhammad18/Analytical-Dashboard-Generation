@@ -1,7 +1,13 @@
 import asyncio
+import logging
+
 from fastapi import APIRouter
 
+from src.core.config import settings
 from src.core.supabase import get_async_supabase_client
+from src.services.local_sample import sample_tables
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/dashboard",
@@ -10,11 +16,12 @@ router = APIRouter(
 )
 
 
-@router.get("/")
-async def get_dashboard_data():
+async def _load_tables():
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        logger.info("Supabase is not configured; serving the local sample dataset")
+        return sample_tables()
+
     supabase_client = await get_async_supabase_client()
-    
-    # Fire all fetch requests in parallel to drastically improve speed
     tasks = [
         supabase_client.table('monthly_chart').select('*').execute(),
         supabase_client.table('combined_data_by_output_type').select('*').execute(),
@@ -23,16 +30,31 @@ async def get_dashboard_data():
         supabase_client.table('combined_data_by_input_type').select('*').execute(),
         supabase_client.table('combined_data_by_language').select('*').execute()
     ]
-    
-    # Wait for all to complete concurrently
     results = await asyncio.gather(*tasks)
-    
-    month_wise_data = results[0].data
-    output_type_data = results[1].data
-    user_data = results[2].data
-    channel_data = results[3].data
-    input_type_data = results[4].data
-    language_data = results[5].data
+    return {
+        "month_wise_data": results[0].data,
+        "output_type_data": results[1].data,
+        "user_data": results[2].data,
+        "channel_data": results[3].data,
+        "input_type_data": results[4].data,
+        "language_data": results[5].data,
+    }
+
+
+@router.get("/")
+async def get_dashboard_data():
+    try:
+        tables = await _load_tables()
+    except Exception:
+        logger.exception("Live dashboard fetch failed; serving the local sample dataset")
+        tables = sample_tables()
+
+    month_wise_data = tables["month_wise_data"]
+    output_type_data = tables["output_type_data"]
+    user_data = tables["user_data"]
+    channel_data = tables["channel_data"]
+    input_type_data = tables["input_type_data"]
+    language_data = tables["language_data"]
 
     # Helper to safely convert a value to int (handles None, str, float)
     def safe_int(val, default=0):

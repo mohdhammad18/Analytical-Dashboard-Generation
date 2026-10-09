@@ -2,8 +2,16 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Dict, Any, Literal, Optional
 
+from src.core.config import settings
+from src.services.local_sample import demo_chat
 from src.services.orchestrator import orchestrate
 from src.services.history import history_service
+
+
+def _llm_configured() -> bool:
+    if settings.USE_OPENAI.strip().lower() in ("1", "true", "yes", "on"):
+        return bool(settings.OPENAI_API_KEY.strip())
+    return bool(settings.GROQ_API_KEY.strip())
 
 router = APIRouter()
 
@@ -43,6 +51,27 @@ async def chat(request: ChatRequest):
     """
     try:
         past = [{"role": m.role, "content": m.content} for m in request.messages]
+
+        if not _llm_configured():
+            demo = demo_chat(
+                request.text,
+                make_chart=request.make_chart,
+                make_dashboard=request.make_dashboard,
+            )
+            return ChatResponse(
+                status="success",
+                reply=demo["reply"],
+                table_data=demo.get("table_data"),
+                chart_config=demo.get("chart_config"),
+                dashboard_config=demo.get("dashboard_config"),
+                session_id=request.session_id,
+                metadata={
+                    "source": "local_sample",
+                    "has_table": demo.get("table_data") is not None,
+                    "has_chart": demo.get("chart_config") is not None,
+                    "has_dashboard": demo.get("dashboard_config") is not None,
+                },
+            )
 
         # Auto-create session if history DB is available but no session_id provided
         session_id = request.session_id

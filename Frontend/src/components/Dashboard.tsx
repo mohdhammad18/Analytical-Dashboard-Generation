@@ -417,10 +417,9 @@ export function Dashboard({ onAddChartContext, mode = 'overview' }: DashboardPro
                       <span className={`text-xs font-medium flex items-center gap-1 ${kpi.trend.startsWith('+') ? 'text-emerald-500' : 'text-blue-500'}`}>{kpi.trend.startsWith('+') ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}{kpi.trend}</span>
                     </div>
                     
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className={`text-xs font-medium flex items-center gap-1 ${kpi.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {kpi.trend.startsWith('+') ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}{kpi.trend}
-                      </span>
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-[var(--text-muted)]">{kpi.title}</p>
+                      <p className="mt-1 text-2xl font-bold text-[var(--text-main)]">{kpi.value}</p>
                     </div>
                   </div>
                 </KPICard>

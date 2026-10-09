@@ -12,11 +12,16 @@ from .utils import get_supabase_client, execute_raw_sql, OPENAI_API_KEY
 logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
-_openai_client = OpenAI(api_key=OPENAI_API_KEY)
+_openai_client: Optional[OpenAI] = None
 
 
 def _embed(texts: List[str]) -> np.ndarray:
     """Embed a list of strings using OpenAI and return an (N, D) float32 array."""
+    global _openai_client
+    if _openai_client is None:
+        if not OPENAI_API_KEY:
+            raise RuntimeError("OPENAI_API_KEY is not set, so table embeddings cannot run.")
+        _openai_client = OpenAI(api_key=OPENAI_API_KEY)
     response = _openai_client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
     vectors = [item.embedding for item in response.data]
     return np.array(vectors, dtype=np.float32)
